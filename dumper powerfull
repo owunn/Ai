@@ -1,0 +1,558 @@
+--[[
+    AbsoluteDumper (Ultimate + Interactables Scanner) - FIXED UI
+--]]
+
+-- ============================================================
+-- 1. CUSTOM UI CREATION (Loaded First so it ALWAYS appears)
+-- ============================================================
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local MarketplaceService = game:GetService("MarketplaceService")
+
+local parentGui = (gethui and gethui()) or game:GetService("CoreGui")
+if not pcall(function() return parentGui.Name end) then
+    parentGui = Players.LocalPlayer:WaitForChild("PlayerGui")
+end
+
+if parentGui:FindFirstChild("AbsoluteDumperUI") then
+    parentGui.AbsoluteDumperUI:Destroy()
+end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "AbsoluteDumperUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.DisplayOrder = 999
+ScreenGui.Parent = parentGui
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 320, 0, 240)
+MainFrame.Position = UDim2.new(0.5, -160, 0.5, -120)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 8)
+UICorner.Parent = MainFrame
+
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 35)
+TitleBar.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+TitleBar.BorderSizePixel = 0
+TitleBar.Parent = MainFrame
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 8)
+TitleCorner.Parent = TitleBar
+
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Size = UDim2.new(1, -40, 1, 0)
+TitleLabel.Position = UDim2.new(0, 10, 0, 0)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Text = "AbsoluteDumper (Ultimate+)"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.TextSize = 14
+TitleLabel.Parent = TitleBar
+
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+CloseBtn.Position = UDim2.new(1, -35, 0, 2.5)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+CloseBtn.Text = "X"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextSize = 14
+CloseBtn.Parent = TitleBar
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 6)
+CloseCorner.Parent = CloseBtn
+CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
+
+local StatusLabel = Instance.new("TextLabel")
+StatusLabel.Size = UDim2.new(1, -20, 0, 40)
+StatusLabel.Position = UDim2.new(0, 10, 0, 40)
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Text = "Status: Loading..."
+StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
+StatusLabel.TextYAlignment = Enum.TextYAlignment.Top
+StatusLabel.Font = Enum.Font.Gotham
+StatusLabel.TextSize = 12
+StatusLabel.TextWrapped = true
+StatusLabel.Parent = MainFrame
+
+local ProgressBg = Instance.new("Frame")
+ProgressBg.Size = UDim2.new(1, -20, 0, 6)
+ProgressBg.Position = UDim2.new(0, 10, 0, 85)
+ProgressBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+ProgressBg.BorderSizePixel = 0
+ProgressBg.Parent = MainFrame
+local ProgCorner = Instance.new("UICorner")
+ProgCorner.CornerRadius = UDim.new(0, 4)
+ProgCorner.Parent = ProgressBg
+
+local ProgressFill = Instance.new("Frame")
+ProgressFill.Size = UDim2.new(0, 0, 1, 0)
+ProgressFill.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+ProgressFill.BorderSizePixel = 0
+ProgressFill.Parent = ProgressBg
+local FillCorner = Instance.new("UICorner")
+FillCorner.CornerRadius = UDim.new(0, 4)
+FillCorner.Parent = ProgressFill
+
+local LogLabel = Instance.new("TextLabel")
+LogLabel.Size = UDim2.new(1, -20, 0, 50)
+LogLabel.Position = UDim2.new(0, 10, 0, 95)
+LogLabel.BackgroundTransparency = 1
+LogLabel.Text = "Checking executor..."
+LogLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+LogLabel.TextXAlignment = Enum.TextXAlignment.Left
+LogLabel.TextYAlignment = Enum.TextYAlignment.Top
+LogLabel.Font = Enum.Font.Code
+LogLabel.TextSize = 11
+LogLabel.TextWrapped = true
+LogLabel.Parent = MainFrame
+
+local StartBtn = Instance.new("TextButton")
+StartBtn.Size = UDim2.new(0.6, -15, 0, 35)
+StartBtn.Position = UDim2.new(0, 10, 1, -45)
+StartBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+StartBtn.Text = "Start Dump"
+StartBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+StartBtn.Font = Enum.Font.GothamBold
+StartBtn.TextSize = 14
+StartBtn.Parent = MainFrame
+local BtnCorner = Instance.new("UICorner")
+BtnCorner.CornerRadius = UDim.new(0, 6)
+BtnCorner.Parent = StartBtn
+
+local CopyBtn = Instance.new("TextButton")
+CopyBtn.Size = UDim2.new(0.4, -15, 0, 35)
+CopyBtn.Position = UDim2.new(0.6, 5, 1, -45)
+CopyBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+CopyBtn.Text = "Copy Path"
+CopyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CopyBtn.Font = Enum.Font.GothamBold
+CopyBtn.TextSize = 13
+CopyBtn.Parent = MainFrame
+local CopyCorner = Instance.new("UICorner")
+CopyCorner.CornerRadius = UDim.new(0, 6)
+CopyCorner.Parent = CopyBtn
+
+local function setStatus(text) StatusLabel.Text = "Status: " .. text end
+local function setProgress(percent) ProgressFill.Size = UDim2.new(math.clamp(percent / 100, 0, 1), 0, 1, 0) end
+
+local logBuffer = {}
+local function log(msg)
+    table.insert(logBuffer, msg)
+    if #logBuffer > 3 then table.remove(logBuffer, 1) end
+    LogLabel.Text = table.concat(logBuffer, "\n")
+end
+
+-- ============================================================
+-- 2. CAPABILITY CHECKS (Inside the UI)
+-- ============================================================
+if not (writefile and isfolder and makefolder) then
+    setStatus("Error")
+    log("Executor lacks filesystem functions.\nCannot dump.")
+    StartBtn.Text = "Unsupported"
+    StartBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    return
+end
+
+local nilInstancesFn = getnilinstances or get_nil_instances
+local decompileFn = (type(decompile) == "function") and decompile or nil
+local bytecodeFn = (type(getscriptbytecode) == "function") and getscriptbytecode or nil
+local hashFn = (type(getscripthash) == "function") and getscripthash or nil
+local getgcFn = (type(getgc) == "function") and getgc or nil
+local getconstantsFn = (type(debug) == "table" and type(debug.getconstants) == "function") and debug.getconstants or nil
+local appendFn = appendfile or function(p, c)
+    local old = readfile(p)
+    writefile(p, old .. c)
+end
+
+-- ============================================================
+-- 3. CONFIG
+-- ============================================================
+local CONFIG = {
+    Decompile       = true,
+    Threads         = 5,
+    Delay           = 0.05,
+    IncludeNil      = true,
+    IncludeGC       = true, 
+    ExtractConsts   = true, 
+    IncludeTouches  = true, 
+    ReplaceUsername = true,
+    DisableRender   = true,
+    OutputFolder    = "AbsoluteDumper",
+    FileName        = "Combined_Dump.lua",
+}
+
+local plrName = Players.LocalPlayer and Players.LocalPlayer.Name or nil
+
+local ignoredServices = { "Chat", "CoreGui", "CorePackages" }
+local ignoredScripts  = { "PlayerModule", "RbxCharacterSounds", "PlayerScriptsLoader", "ChatScript", "BubbleChat" }
+
+local function getPlaceName()
+    local ok, info = pcall(function() return MarketplaceService:GetProductInfo(game.PlaceId) end)
+    if ok and info and info.Name then
+        return (info.Name:gsub("[\\/:*?\"<>|\n\r]", " "))
+    end
+    return "Unknown"
+end
+
+local outputDir  = CONFIG.OutputFolder
+local folderName = ("%s/[%s] %s"):format(outputDir, tostring(game.PlaceId), getPlaceName())
+local finalFilePath = folderName .. "/" .. CONFIG.FileName
+
+local function ensureFolders()
+    if not isfolder(outputDir) then makefolder(outputDir) end
+    if not isfolder(folderName) then makefolder(folderName) end
+end
+
+local function isIgnored(instance)
+    for _, svcName in ipairs(ignoredServices) do
+        if instance:FindFirstAncestor(svcName) then return true end
+    end
+    for _, name in ipairs(ignoredScripts) do
+        if instance.Name == name or instance:FindFirstAncestor(name) then return true end
+    end
+    return false
+end
+
+local function escapeName(name)
+    if name:find("[^%w_]") then
+        return ("['%s']"):format((name:gsub("'", "\\'")))
+    end
+    return name
+end
+
+local function getFullName(instance)
+    local ok, fullName = pcall(function() return instance:GetFullName() end)
+    if not ok or not fullName then return "--[unresolvable] " .. tostring(instance.Name) end
+    if not instance:IsDescendantOf(game) then return "--[nil/gc script] " .. fullName end
+    local parts = fullName:split(".")
+    if #parts < 2 then return ("game:GetService(\"%s\")"):format(parts[1]) end
+    
+    local result = ("game:GetService(\"%s\")"):format(parts[1])
+    for i = 2, #parts do
+        result = result .. "." .. escapeName(parts[i])
+    end
+    return result
+end
+
+local function tryDecompile(scriptObj)
+    if decompileFn then
+        local ok, r = pcall(decompileFn, scriptObj)
+        if ok and type(r) == "string" and #r > 0 then return r end
+    end
+    if bytecodeFn then
+        local ok, r = pcall(bytecodeFn, scriptObj)
+        if ok and type(r) == "string" then
+            return "--[bytecode fallback]\n" .. r
+        end
+    end
+    return nil
+end
+
+CopyBtn.MouseButton1Click:Connect(function()
+    if setclipboard then
+        setclipboard(finalFilePath)
+        log("Path copied to clipboard!")
+    else
+        log("Path: " .. finalFilePath)
+    end
+end)
+
+-- ============================================================
+-- 4. SCANNING & DUMP LOGIC
+-- ============================================================
+local activeThreads = 0
+local isDumping = false
+local scriptsSaved = 0
+local decompileCache = {}
+
+local function waitForThread()
+    while activeThreads >= CONFIG.Threads do
+        task.wait(CONFIG.Delay)
+    end
+end
+
+local function collectScripts()
+    local list, seen, scanned = {}, {}, 0
+    local function add(inst)
+        if inst:IsA("LuaSourceContainer") and not isIgnored(inst) then
+            local ok, hash = pcall(function() 
+                return hashFn and hashFn(inst) or inst:GetFullName() 
+            end)
+            local key = ok and hash or inst
+            
+            if not seen[key] then
+                seen[key] = true
+                table.insert(list, inst)
+            end
+        end
+    end
+
+    setStatus("Scanning scripts...")
+    for _, desc in ipairs(game:GetDescendants()) do
+        scanned = scanned + 1
+        if scanned % 2000 == 0 then
+            setStatus(("Scanning... %d"):format(scanned))
+            task.wait()
+        end
+        add(desc)
+    end
+
+    if CONFIG.IncludeNil and nilInstancesFn then
+        setStatus("Scanning nil scripts...")
+        local ok, nils = pcall(nilInstancesFn)
+        if ok and type(nils) == "table" then
+            for _, inst in ipairs(nils) do pcall(add, inst) end
+        end
+    end
+
+    if CONFIG.IncludeGC and getgcFn then
+        setStatus("Scanning GC memory...")
+        local ok, gc = pcall(getgcFn, true)
+        if ok and type(gc) == "table" then
+            for _, obj in ipairs(gc) do
+                pcall(function()
+                    if typeof(obj) == "Instance" and obj:IsA("LuaSourceContainer") then
+                        add(obj)
+                    end
+                end)
+            end
+        end
+    end
+    return list
+end
+
+local function collectRemotes()
+    local remotes = {}
+    for _, inst in ipairs(game:GetDescendants()) do
+        if inst:IsA("RemoteEvent") or inst:IsA("RemoteFunction") or inst:IsA("UnreliableRemoteEvent") then
+            table.insert(remotes, { Type = inst.ClassName, Path = getFullName(inst) })
+        end
+    end
+    return remotes
+end
+
+-- Collects TouchInterests, ClickDetectors, and ProximityPrompts
+local function collectInteractables()
+    local interactables = {}
+    if not CONFIG.IncludeTouches then return interactables end
+    
+    setStatus("Scanning Interactables...")
+    local scanned = 0
+    for _, inst in ipairs(game:GetDescendants()) do
+        scanned = scanned + 1
+        if scanned % 5000 == 0 then task.wait() end 
+        
+        if inst:IsA("ProximityPrompt") then
+            table.insert(interactables, { Type = "ProximityPrompt", Path = getFullName(inst) })
+        elseif inst:IsA("ClickDetector") then
+            table.insert(interactables, { Type = "ClickDetector", Path = getFullName(inst) })
+        elseif inst:IsA("BasePart") then
+            local success, touchObj = pcall(function() return inst:FindFirstChildOfClass("TouchInterest") end)
+            if success and touchObj then
+                table.insert(interactables, { Type = "TouchPart", Path = getFullName(inst) })
+            end
+        end
+    end
+    return interactables
+end
+
+local function runDump()
+    ensureFolders()
+    setProgress(0)
+    scriptsSaved = 0
+    logBuffer = {}
+
+    local scriptList = collectScripts()
+    local total = #scriptList
+    if total == 0 then
+        setStatus("No scripts found.")
+        log("Nothing to dump.")
+        return
+    end
+
+    setStatus("Scanning Remotes...")
+    local remotesList = collectRemotes()
+    local interactablesList = collectInteractables()
+
+    log(("Found %d remotes, %d interactables."):format(#remotesList, #interactablesList))
+    setStatus(("Dumping %d scripts..."):format(total))
+
+    if CONFIG.DisableRender then
+        pcall(function() RunService:Set3dRenderingEnabled(false) end)
+    end
+
+    local completed = 0
+    local results = {}
+
+    local function tick()
+        completed = completed + 1
+        setProgress((completed / total) * 100)
+        setStatus(("Dumped %d/%d"):format(completed, total))
+    end
+
+    for idx, scriptObj in ipairs(scriptList) do
+        waitForThread()
+        activeThreads = activeThreads + 1
+        task.spawn(function()
+            local ok, err = pcall(function()
+                local path = getFullName(scriptObj)
+                if CONFIG.ReplaceUsername and plrName and #plrName > 1 then
+                    path = path:gsub(plrName, "LocalPlayer")
+                end
+
+                local code
+                if CONFIG.Decompile then
+                    local key = scriptObj.ClassName .. ":" .. scriptObj.Name
+                    code = decompileCache[key]
+                    if not code then
+                        code = tryDecompile(scriptObj)
+                        if code then decompileCache[key] = code end
+                    end
+                end
+
+                if not code and CONFIG.ExtractConsts and getconstantsFn then
+                    local constOk, consts = pcall(getconstantsFn, scriptObj)
+                    if constOk and type(consts) == "table" then
+                        local validConsts = {}
+                        for _, c in ipairs(consts) do
+                            if type(c) == "string" then
+                                table.insert(validConsts, string.format("%q", c))
+                            end
+                        end
+                        if #validConsts > 0 then
+                            code = "-- [Decompilation failed. Extracted String Constants below]\n" ..
+                                   "return {\n    " .. table.concat(validConsts, ",\n    ") .. "\n}"
+                        end
+                    end
+                end
+
+                if not code then code = "-- [decompilation unavailable]" end
+
+                local requires = {}
+                for reqId in code:gmatch("require%s*%(?%s*(%d+)%s*%)?") do
+                    table.insert(requires, reqId)
+                end
+                local reqString = ""
+                if #requires > 0 then
+                    reqString = "-- Dependencies (Requires): " .. table.concat(requires, ", ") .. "\n"
+                end
+
+                results[idx] = ("-- ==========================================\n" ..
+                                "-- Script: %s\n" ..
+                                "-- Class: %s\n" ..
+                                "-- Path: %s\n" ..
+                                "%s" ..
+                                "-- ==========================================\n\n%s\n\n"):format(
+                    scriptObj.Name, scriptObj.ClassName, path, reqString, code)
+                
+                scriptsSaved = scriptsSaved + 1
+                log(("Dumped: %s"):format(scriptObj.Name))
+            end)
+
+            if not ok then
+                results[idx] = ("-- [ERROR DUMPING %s]: %s\n\n"):format(tostring(scriptObj.Name), tostring(err))
+                log(("Error: %s"):format(tostring(scriptObj.Name)))
+            end
+
+            activeThreads = activeThreads - 1
+            tick()
+        end)
+    end
+
+    while activeThreads > 0 do task.wait(0.1) end
+
+    if CONFIG.DisableRender then
+        pcall(function() RunService:Set3dRenderingEnabled(true) end)
+    end
+
+    setStatus("Saving file...")
+    log("Writing to disk...")
+    task.wait(0.2)
+
+    local success, writeErr = pcall(function()
+        local baseHeader = ("-- AbsoluteDumper Ultimate+ Output\n-- Place: %s\n-- Total Scripts: %d\n\n"):format(game.PlaceId, scriptsSaved)
+        writefile(finalFilePath, baseHeader)
+        
+        local remoteHeader = "-- ==========================================\n" ..
+                             ("-- REMOTE OBJECTS FOUND (%d)\n"):format(#remotesList) ..
+                             "-- ==========================================\n"
+        for _, remote in ipairs(remotesList) do
+            remoteHeader = remoteHeader .. ("-- %s: %s\n"):format(remote.Type, remote.Path)
+        end
+        appendFn(finalFilePath, remoteHeader .. "\n\n")
+        
+        local interactHeader = "-- ==========================================\n" ..
+                               ("-- INTERACTABLES FOUND (%d)\n"):format(#interactablesList) ..
+                               "-- ==========================================\n"
+        appendFn(finalFilePath, interactHeader)
+
+        local interactChunk = ""
+        for i, item in ipairs(interactablesList) do
+            interactChunk = interactChunk .. ("-- %s: %s\n"):format(item.Type, item.Path)
+            if #interactChunk > 100000 or i == #interactablesList then
+                appendFn(finalFilePath, interactChunk)
+                interactChunk = ""
+                task.wait()
+            end
+        end
+        appendFn(finalFilePath, "\n\n")
+
+        local chunk = ""
+        for i = 1, #results do
+            if results[i] then
+                chunk = chunk .. results[i]
+                if #chunk > 500000 or i == #results then
+                    appendFn(finalFilePath, chunk)
+                    chunk = "" 
+                    task.wait(0.05)
+                end
+            end
+        end
+    end)
+
+    if success then
+        setProgress(100)
+        setStatus("Complete!")
+        log(("Saved %d scripts, %d remotes, %d interactables."):format(scriptsSaved, #remotesList, #interactablesList))
+    else
+        setStatus("Failed to save.")
+        log("Error: " .. tostring(writeErr))
+    end
+end
+
+StartBtn.MouseButton1Click:Connect(function()
+    if isDumping then return end
+    isDumping = true
+    StartBtn.Text = "Dumping..."
+    StartBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    
+    task.spawn(function()
+        local ok, err = pcall(runDump)
+        isDumping = false
+        StartBtn.Text = "Start Dump"
+        StartBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+        
+        if not ok then
+            setStatus("Error.")
+            log("Fatal: " .. tostring(err))
+            pcall(function() RunService:Set3dRenderingEnabled(true) end)
+        end
+    end)
+end)
+
+setStatus("Ready")
+log("Place: " .. game.PlaceId)
+if not decompileFn and not bytecodeFn then
+    log("Warning: No decompiler found.")
+end
